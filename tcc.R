@@ -66,11 +66,11 @@ set.seed(100)
 db_filters_scale['amostragem'] <- sample(1:2, # vamos amostrar elementos do conjunto c(1,2)
                                          size=nrow(db_filters_scale), # O tamanho da amostragem 
                                          replace=TRUE, # Amostragem com reposição (de c(1,2))
-                                         prob=c(0.80,0.20)) # A probabilidade de ser 1 é 80%, de ser 2 é 20%
+                                         prob=c(0.75,0.25)) # A probabilidade de ser 1 é 80%, de ser 2 é 20%
 
 
 #fazendo os ultimos dados do forecast serem teste
-db_filters_scale[c(nrow(db_filters_scale)-nrow(data_for_forecast)-2):nrow(db_filters_scale),'amostragem']<-2
+db_filters_scale[c(nrow(db_filters_scale)-nrow(data_for_forecast)):nrow(db_filters_scale),'amostragem']<-2
 
 # Dividir amostras de treino e teste e resultado #
 db_filters_treino <- db_filters_scale[db_filters_scale$amostragem==1,]# Amostra de treino: n==1 (os 80%)
@@ -85,11 +85,11 @@ df_regressao['amostragem']<-db_filters_scale$amostragem
 set.seed(100)
 nn_00<-neuralnet(material ~ ipca  + aco +dolar ,
                  data=db_filters_treino,
-                 hidden = c(7,5,2),
+                 hidden = c(20,10,5),
                  act.fct="tanh",
                  linear.output = T,
                  err.fct = "sse",
-                 rep=10)
+                 rep=1)
 
 result_treino_00<-predict(nn_00,db_filters_treino)
 result_teste_00<-predict(nn_00,db_filters_teste)
@@ -117,3 +117,8 @@ df_scale['result']<-result
 df_scale<-as.matrix(df_scale)
 write.csv(df_scale,file = "df_scale.csv")
 
+a<-as_data_frame(db_filters_scale$material)
+a$total<-as_data_frame(result)
+ggplot(a, aes(a$value, a$total$V1))
+ggplot(a) +
+  geom_point(aes(a$value, a$total$V1))
