@@ -16,7 +16,6 @@ if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
 
 
 #carregando database
-
 df_levels<- read_csv("data_base_filtro.csv", 
                                col_types = cols(date_00 = col_date(format = "%Y-%m-%d")), 
                                locale = locale(decimal_mark = ",", grouping_mark = "."))
@@ -24,7 +23,7 @@ date_fix<- c(strtrim(df_levels$date_00,10))
 df_levels$date_00<-as.Date(date_fix)
 df_levels$Index<-43
 
-
+I<-43
 
 data_for_forecast <- read_csv("data_for_forecast.csv")
 date_fix<- c(strtrim(data_for_forecast$date_00,10))
@@ -42,8 +41,6 @@ df_results['material']<-df_levels$material
 
 
 
-I<-43
-
 #preparando tabela de regressão com apenas os dados para c�lccular a regressão
 df_regressao<-df_levels[df_levels['Index']==I,]
 names(df_regressao)[names(df_regressao)=="Index"]<-"Index"
@@ -54,7 +51,7 @@ names(df_regressao)[names(df_regressao)=="dolar_00"]<-"dolar"
 names(df_regressao)[names(df_regressao)=="aco_00"]<-"aco"
 names(df_regressao)[names(df_regressao)=="ipca_00"]<-"ipca"
 df_regressao<-df_regressao[,c("Index","date","material","dolar","aco","ipca")]
-df_regressao<-bind_rows(df_regressao,data_for_forecast)
+#df_regressao<-bind_rows(df_regressao,data_for_forecast)
 #df_regressao$`PN-Short`<-df_regressao[1,"Partnumber"]
 df_regressao$Index<-df_regressao[1,"Index"]
 
@@ -88,7 +85,7 @@ df_regressao['amostragem']<-db_filters_scale$amostragem
 set.seed(100)
 nn_00<-neuralnet(material ~ ipca  + aco +dolar ,
                  data=db_filters_treino,
-                 hidden = c(7,10,5,2),
+                 hidden = c(7,5,2),
                  act.fct="tanh",
                  linear.output = T,
                  err.fct = "sse",
@@ -108,11 +105,9 @@ df_regressao['result']<-c(result*sd(df_regressao$material, na.rm = TRUE) + mean(
 
 r2_nn_teste<-r2_nn_00_teste$estimate
 
-
 print(r2_nn_00_treino)
 print(r2_nn_00_teste)
 print(r2_nn_00_total)
-
 
 df_final<-as.matrix(df_regressao)
 write.csv(df_final,file = "Result_NN_TCC.csv")
